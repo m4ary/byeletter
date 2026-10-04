@@ -11,7 +11,10 @@ export async function GET() {
   return NextResponse.json({ accounts: listAccounts() });
 }
 
-/** Add a mailbox: verify the login, save it encrypted, and start an inbox scan. */
+/**
+ * Add a mailbox: verify the login, save it encrypted, and start a first scan.
+ * Body: see parseAccountInput, plus optional `scan`: "inbox" (default), "all" or false.
+ */
 export async function POST(request: Request) {
   const denied = await denyUnlessAdmin();
   if (denied) return denied;
@@ -29,10 +32,13 @@ export async function POST(request: Request) {
   try {
     await verifyAccount(parsed.account);
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 401 });
+    // 422, not 401: the request was authorised but the mailbox login failed.
+    return NextResponse.json({ error: (err as Error).message }, { status: 422 });
   }
 
   const id = createAccount(parsed.account, parsed.label);
-  startScans([id], "inbox", 500);
-  return NextResponse.json({ id }, { status: 201 });
+  const scan = body.scan === false ? null : body.scan === "all" ? "all" : "inbox";
+  if (scan) startScans([id], scan, 500);
+  const account = listAccounts().find((a) => a.id === id);
+  return NextResponse.json({ id, account, scanning: scan ?? false }, { status: 201 });
 }

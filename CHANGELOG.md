@@ -7,7 +7,11 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- API access with `API_KEY` (`Authorization: Bearer`). Add a mailbox with just an email and app password, choose the first scan, and list provider presets at `GET /api/providers`. See `docs/API.md`.
 - MIT license, contributing guide, security policy and a README screenshot.
+
+### Changed
+- A failed mailbox login when adding a mailbox returns `422` instead of `401`.
 
 ## [1.2.0] - 2026-09-29
 

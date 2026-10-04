@@ -1,4 +1,4 @@
-import { getProvider } from "./providers";
+import { detectProvider, getProvider } from "./providers";
 import type { MailAccount, Protocol, ServerConfig } from "./types";
 
 function parseServer(value: unknown): ServerConfig | undefined {
@@ -18,10 +18,14 @@ export function parseAccountInput(
   const password = typeof body.password === "string" ? body.password : "";
   const username = (typeof body.username === "string" && body.username.trim()) || email;
   const protocol: Protocol = body.protocol === "pop3" ? "pop3" : "imap";
-  const provider = getProvider(typeof body.providerId === "string" ? body.providerId : "custom");
+  // Without a providerId (e.g. API calls), pick the preset from the email domain.
+  const providerId =
+    typeof body.providerId === "string" ? body.providerId : (detectProvider(email)?.id ?? "custom");
+  const provider = getProvider(providerId);
   const label = typeof body.label === "string" ? body.label.trim().slice(0, 80) : undefined;
 
-  if (!email || !password || !provider) return { error: "Email, password and provider are required." };
+  if (!email || !password) return { error: "Email and password are required." };
+  if (!provider) return { error: `Unknown provider "${providerId}". See GET /api/providers.` };
 
   const isCustom = provider.id === "custom";
   const incoming = isCustom ? parseServer(body.incoming) : provider[protocol];
@@ -29,9 +33,11 @@ export function parseAccountInput(
 
   if (!incoming) {
     return {
-      error: isCustom
-        ? "Enter a valid incoming server host and port."
-        : `${provider.name} does not support ${protocol.toUpperCase()}.`,
+      error: !isCustom
+        ? `${provider.name} does not support ${protocol.toUpperCase()}.`
+        : typeof body.providerId === "string"
+          ? "Enter a valid incoming server host and port."
+          : "No preset for this email domain. Set providerId (see GET /api/providers) or incoming server settings.",
     };
   }
 

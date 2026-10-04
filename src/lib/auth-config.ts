@@ -1,5 +1,24 @@
 // Shared by the proxy and route handlers, so it must not import "server-only".
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+
+/** Shortest API_KEY accepted; shorter values are ignored so a weak key can't open the API. */
+export const MIN_API_KEY_LENGTH = 32;
+
+/** The API key from API_KEY, if one of at least MIN_API_KEY_LENGTH characters is set. */
+export function apiKey(): string | undefined {
+  const key = process.env.API_KEY;
+  return key && key.length >= MIN_API_KEY_LENGTH ? key : undefined;
+}
+
+/** True when an `Authorization: Bearer <key>` header matches API_KEY (constant-time). */
+export function isValidApiKey(authorization: string | null): boolean {
+  const expected = apiKey();
+  const given = authorization?.match(/^Bearer\s+(\S+)$/i)?.[1];
+  if (!expected || !given) return false;
+  const a = createHash("sha256").update(given).digest();
+  const b = createHash("sha256").update(expected).digest();
+  return timingSafeEqual(a, b);
+}
 
 export interface SessionData {
   /** Set once the ADMIN_PASSWORD has been entered on /unlock */

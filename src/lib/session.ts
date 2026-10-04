@@ -1,10 +1,11 @@
 import "server-only";
 import { createHash, timingSafeEqual } from "node:crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { getIronSession } from "iron-session";
 import {
   adminPassword,
   cookieSecure,
+  isValidApiKey,
   sessionPassword,
   SESSION_COOKIE,
   SESSION_TTL_SECONDS,
@@ -32,8 +33,15 @@ export async function isAdmin(): Promise<boolean> {
   return Boolean((await getSession()).admin);
 }
 
-/** For route handlers: a 401 response when the app is locked, otherwise null. The proxy checks too. */
+/**
+ * For route handlers: null when the request is unlocked (admin session cookie, or a valid
+ * `Authorization: Bearer <API_KEY>` header), otherwise a 401 response. The proxy checks too.
+ */
 export async function denyUnlessAdmin(): Promise<NextResponse | null> {
+  const authorization = (await headers()).get("authorization");
+  if (authorization) {
+    return isValidApiKey(authorization) ? null : NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+  }
   return (await isAdmin()) ? null : NextResponse.json({ error: "Locked" }, { status: 401 });
 }
 

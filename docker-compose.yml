@@ -12,6 +12,8 @@ services:
       # Recommended: 32+ random characters (openssl rand -hex 32). Also encrypts saved
       # mailbox passwords, so keep it stable or you'll need to re-add your mailboxes.
       SESSION_SECRET: ${SESSION_SECRET:-}
+      # Optional: enables the API (Authorization: Bearer <API_KEY>), 32+ characters.
+      API_KEY: ${API_KEY:-}
       # Set to "true" when served over HTTPS (e.g. behind a reverse proxy).
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
     volumes:

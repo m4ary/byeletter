@@ -74,9 +74,22 @@ Set these in `.env` (Compose) or as container environment variables.
 | `ADMIN_PASSWORD` | yes | Password for the app's login page. If it's not set, nobody can unlock the app |
 | `SESSION_SECRET` | recommended | 32+ random characters (`openssl rand -hex 32`). Encrypts the login cookie **and the saved mailbox passwords**. If unset, a key is derived from `ADMIN_PASSWORD`. Keep it stable: if it changes, saved mailboxes must be added again |
 | `COOKIE_SECURE` | no | `true` makes the login cookie HTTPS-only. Compose sets `false` so plain `http://` works on your network; set `true` behind HTTPS |
+| `API_KEY` | no | Enables the [API](#api) for scripts and other tools. At least 32 random characters (`openssl rand -hex 32`) |
 | `PORT` | no | Host port in Compose (default `3000`) |
 | `BYELETTER_VERSION` | no | Image version in Compose (default `latest`) |
 | `DATA_DIR` | no | Where the SQLite database is stored. Defaults to `./data`; the Docker image uses `/app/data` |
+
+## API
+
+Set `API_KEY` and you can add mailboxes, start scans and unsubscribe from scripts or other tools:
+
+```bash
+curl -X POST http://localhost:3000/api/accounts \
+  -H "Authorization: Bearer $API_KEY" -H "Content-Type: application/json" \
+  -d '{"email": "me@gmail.com", "password": "your-app-password", "label": "Personal"}'
+```
+
+For known providers the email address and app password are enough. See [docs/API.md](docs/API.md) for custom servers and every endpoint.
 
 ## Updating and backups
 
@@ -105,7 +118,7 @@ Your mailboxes and scan results live in the `byeletter-data` volume (`/app/data`
 
 - **Your data stays with you.** Byeletter only talks to your mail servers and, when you unsubscribe, to the sender's unsubscribe link or address. There's no telemetry, account or cloud service.
 - **Mailbox passwords** are checked with a real login, then stored in the local database encrypted with AES-256-GCM. They're never sent back to the browser.
-- **The whole app** is behind `ADMIN_PASSWORD`, with an encrypted, `httpOnly`, `SameSite=Strict` session cookie that expires after 8 hours. Wrong guesses are limited to 10 per IP every 15 minutes.
+- **The whole app** is behind `ADMIN_PASSWORD` (and the API behind `API_KEY`, if you set one), with an encrypted, `httpOnly`, `SameSite=Strict` session cookie that expires after 8 hours. Wrong guesses are limited to 10 per IP every 15 minutes.
 - **Unsubscribe links come from untrusted emails**, so one-click requests refuse private and local network addresses and don't follow redirects. Links are always read from the saved scan, never from the browser.
 - Once unlocked, the app can connect to any mail server you enter. Use a strong `ADMIN_PASSWORD`, and put the app behind HTTPS if you expose it to the internet.
 

@@ -16,7 +16,7 @@ Reports are handled on a best-effort basis. There's no guaranteed response time 
 
 Examples of what's in scope:
 
-- getting past the `ADMIN_PASSWORD` login;
+- getting past the `ADMIN_PASSWORD` login or the `API_KEY` check;
 - reading or decrypting saved mailbox credentials without the secret;
 - making the server connect to internal network addresses through unsubscribe links;
 - cross-site scripting or request forgery in the web interface.
