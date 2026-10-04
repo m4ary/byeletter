@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-04
+
 ### Added
 - API access with `API_KEY` (`Authorization: Bearer`). Add a mailbox with just an email and app password, choose the first scan, and list provider presets at `GET /api/providers`. See `docs/API.md`.
 - MIT license, contributing guide, security policy and a README screenshot.
